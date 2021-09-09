@@ -1,0 +1,28 @@
+{
+    "id": "F4D8A811",
+    "path": "~/GitHub/endemocracia_redes/base.Rmd",
+    "project_path": "base.Rmd",
+    "type": "r_markdown",
+    "hash": "3590933910",
+    "contents": "",
+    "dirty": false,
+    "created": 1631210650167.0,
+    "source_on_save": false,
+    "relative_order": 1,
+    "properties": {
+        "tempName": "Untitled1",
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "80,9",
+        "scrollLine": "59",
+        "chunk_output_type": "console"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1631218991,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1631218992184,
+    "read_only": false,
+    "read_only_alternatives": []
+}
