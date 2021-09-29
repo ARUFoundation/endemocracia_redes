@@ -56,6 +56,9 @@ bdm<-bdm %>% filter(twitter!="")
 bdm$twitter<-str_trim(bdm$twitter,side=c("both"))
 bdm$twitter<-gsub(" ","",bdm$twitter,fixed = T)
 bdm$twitter<-gsub("@","",bdm$twitter,fixed = T)
+bdm$twitter<-gsub("https://twitter.com/","",bdm$twitter,fixed = T)
+
+
  
 vv<-c("user_id","screen_name","followers_count","profile_image_url")
 aux<-NULL

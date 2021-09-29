@@ -1,0 +1,117 @@
+---
+title: "Monitoreo de Medios"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+    theme: lumen
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+```
+
+```{r}
+library(tm)
+library(wordcloud2)
+library(readxl)
+library(dplyr)
+library(stringr)
+library(lubridate)
+library(rtweet)
+nube<-function(aux,palabras){
+  docs<-Corpus(VectorSource(aux))
+  docs <- docs %>%
+    tm_map(removeNumbers) %>%
+    tm_map(removePunctuation) %>%
+    tm_map(stripWhitespace)
+  docs <- tm_map(docs, content_transformer(tolower))
+  docs <- tm_map(docs, removeWords, stopwords("sp"))
+  docs <- tm_map(docs, removeWords, palabras)
+  dtm <- TermDocumentMatrix(docs) 
+  matrix <- as.matrix(dtm) 
+  words <- sort(rowSums(matrix),decreasing=TRUE) 
+  df <- data.frame(word = names(words),freq=words)    
+  return(df)
+}
+bdm<-read_excel("C:\\Users\\Alvaro Chirino\\Documents\\GitHub\\endemocracia_redes\\data\\Base_v0.xlsx",1)
+bdm<-bdm %>% filter(twitter!="")
+
+bdm$twitter<-str_trim(bdm$twitter,side=c("both"))
+bdm$twitter<-gsub(" ","",bdm$twitter,fixed = T)
+bdm$twitter<-gsub("@","",bdm$twitter,fixed = T)
+bdm$twitter<-gsub("https://twitter.com/","",bdm$twitter,fixed = T)
+
+vv<-c("user_id","screen_name","followers_count","profile_image_url")
+aux<-NULL
+for(i in 1:nrow(bdm)){
+#print(bdm$twitter[i])
+aa<-lookup_users(bdm$twitter[i])
+if(nrow(aa)>0){
+aux<-rbind(aa[,vv],aux  )  
+}
+}
+depto<-c("chuquisaca","lapaz","cochabamba","oruro","potosí","tarija","beni","pando","santacruz")
+aux2<-get_timelines(aux$screen_name,n=200)
+aux3<-aux2 %>% filter(as_date(created_at)==today())
+aux4<-aux3 %>% mutate(nn=1) %>% group_by(screen_name) %>% mutate(nn=cumsum(nn)) %>% filter(nn<10)
+```
+
+
+# Tendencia en redes ``r today()``
+
+Row
+-----------------------------------------------------------------------
+
+### Número de medios
+
+```{r}
+valueBox(length(unique(aux3$user_id)), icon = "fa-pencil")
+```
+
+### Publicaciones analizadas
+
+```{r}
+valueBox(nrow(aux3), icon = "fa-comments")
+```
+
+### Publicaciones ponderadas
+
+```{r}
+valueBox(nrow(aux4), icon = "fa-trash")
+```
+
+Row
+-----------------------------------------------------------------------
+
+### Publicaciones globales
+
+```{r}
+df1<-nube(aux3$text,c("bolivia",aux$screen_name,"btvinforma",depto,"urgentebo"))
+w1<-wordcloud2(data=df1,color='random-dark',size=0.5,shape = 'pentagon')
+w1
+```
+
+### Publicaciones Ponderadas
+
+```{r}
+#controlando el peso de máximo 10 noticias por medio
+df2<-nube(aux4 %>%  select(text),c("bolivia",aux$screen_name,"btvinforma",depto,"urgentebo","erboldigital"))
+w2<-wordcloud2(data=df2,color='random-dark',size=0.5,shape = 'pentagon')
+w2
+```
+
+
+# Lista de publicaciones
+
+```{r}
+knitr::kable(aux3[,c(3,4,5)])
+```
+
+# Lista de medios
+
+```{r}
+knitr::kable(aux[,c(2,3)])
+```
