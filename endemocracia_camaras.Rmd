@@ -1,0 +1,198 @@
+---
+title: "Monitoreo de Camaras Legislativas"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+    theme: lumen
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+```
+
+```{r}
+library(tm)
+library(wordcloud2)
+library(readxl)
+library(dplyr)
+library(stringr)
+library(lubridate)
+library(rtweet)
+library(DT)
+nube<-function(aux,palabras){
+  docs<-Corpus(VectorSource(aux))
+  docs <- docs %>%
+    tm_map(removeNumbers) %>%
+    tm_map(removePunctuation) %>%
+    tm_map(stripWhitespace)
+  docs <- tm_map(docs, content_transformer(tolower))
+  docs <- tm_map(docs, removeWords, stopwords("sp"))
+  docs <- tm_map(docs, removeWords, palabras)
+  dtm <- TermDocumentMatrix(docs) 
+  matrix <- as.matrix(dtm) 
+  words <- sort(rowSums(matrix),decreasing=TRUE) 
+  df <- data.frame(word = names(words),freq=words)    
+  return(df)
+}
+bds<-read_excel("C:\\Users\\Alvaro Chirino\\Documents\\GitHub\\endemocracia_redes\\data\\Listado_Camaras.xlsx",1)
+bdd<-read_excel("C:\\Users\\Alvaro Chirino\\Documents\\GitHub\\endemocracia_redes\\data\\Listado_Camaras.xlsx",2)
+bds<-bds %>% filter(twitter!="")
+bdd<-bds %>% filter(twitter!="")
+
+bds$twitter<-str_trim(bds$twitter,side=c("both"))
+bds$twitter<-gsub(" ","",bds$twitter,fixed = T)
+bds$twitter<-gsub("@","",bds$twitter,fixed = T)
+bds$twitter<-gsub("https://twitter.com/","",bds$twitter,fixed = T)
+
+bdd$twitter<-str_trim(bdd$twitter,side=c("both"))
+bdd$twitter<-gsub(" ","",bdd$twitter,fixed = T)
+bdd$twitter<-gsub("@","",bdd$twitter,fixed = T)
+bdd$twitter<-gsub("https://twitter.com/","",bdd$twitter,fixed = T)
+
+vv<-c("user_id","screen_name","followers_count","profile_image_url")
+#############################
+#senadores
+aux<-NULL
+for(i in 1:nrow(bds)){
+#print(bdm$twitter[i])
+aa<-lookup_users(bds$twitter[i])
+if(nrow(aa)>0){
+aux<-rbind(aa[,vv],aux  )  
+}
+}
+aux2<-get_timelines(aux$screen_name,n=200)
+aux3<-aux2 %>% filter(as_date(created_at)%in% c(today()-0:10))
+aux4<-aux3 %>% mutate(nn=1) %>% group_by(screen_name) %>% mutate(nn=cumsum(nn)) %>% filter(nn<10)
+#############################
+#diputados
+auxd<-NULL
+for(i in 1:nrow(bdd)){
+#print(bdm$twitter[i])
+aa<-lookup_users(bdd$twitter[i])
+if(nrow(aa)>0){
+auxd<-rbind(aa[,vv],auxd)  
+}
+}
+auxd2<-get_timelines(auxd$screen_name,n=200)
+auxd3<-auxd2 %>% filter(as_date(created_at)%in% c(today()-0:10))
+auxd4<-auxd3 %>% mutate(nn=1) %>% group_by(screen_name) %>% mutate(nn=cumsum(nn)) %>% filter(nn<10)
+#############################
+```
+
+# Camara de senadores
+
+Row
+-----------------------------------------------------------------------
+
+### Número de senadores
+
+```{r}
+valueBox(length(unique(aux3$user_id)), icon = "fa-pencil")
+```
+
+### Publicaciones analizadas
+
+```{r}
+valueBox(nrow(aux3), icon = "fa-comments")
+```
+
+### Publicaciones ponderadas
+
+```{r}
+valueBox(nrow(aux4), icon = "fa-trash")
+```
+
+Row
+-----------------------------------------------------------------------
+
+### Publicaciones globales
+
+```{r}
+df1<-nube(aux3$text,c("bolivia"))
+w1<-wordcloud2(data=df1,color='random-dark',size=0.5,shape = 'pentagon')
+w1
+```
+
+### Publicaciones Ponderadas
+
+```{r}
+#controlando el peso de máximo 10 noticias por medio
+df2<-nube(aux4 %>%  select(text),c("bolivia"))
+w2<-wordcloud2(data=df2,color='random-dark',size=0.5,shape = 'pentagon')
+w2
+```
+
+# Camara de Diputados
+
+Row
+-----------------------------------------------------------------------
+
+### Número de diputados
+
+```{r}
+valueBox(length(unique(auxd3$user_id)), icon = "fa-pencil")
+```
+
+### Publicaciones analizadas
+
+```{r}
+valueBox(nrow(auxd3), icon = "fa-comments")
+```
+
+### Publicaciones ponderadas
+
+```{r}
+valueBox(nrow(auxd4), icon = "fa-trash")
+```
+
+Row
+-----------------------------------------------------------------------
+
+### Publicaciones globales
+
+```{r}
+df3<-nube(auxd3$text,c("bolivia"))
+w3<-wordcloud2(data=df3,color='random-dark',size=0.5,shape = 'pentagon')
+w3
+```
+
+### Publicaciones Ponderadas
+
+```{r}
+#controlando el peso de máximo 10 noticias por medio
+df4<-nube(auxd4 %>% select(text),c("bolivia"))
+w4<-wordcloud2(data=df4,color='random-dark',size=0.5,shape = 'pentagon')
+w4
+```
+
+# Lista de publicaciones
+
+### Senadores
+
+```{r}
+DT::datatable(aux3[,c(3,4,5)],style = "bootstrap")
+```
+
+### Diputados
+
+```{r}
+DT::datatable(auxd3[,c(3,4,5)],style = "bootstrap")
+```
+
+# Lista de camaras
+
+
+### Senadores
+
+```{r}
+DT::datatable(aux[,c(2,3)],style = "bootstrap")
+```
+
+### Diputados
+
+```{r}
+DT::datatable(auxd[,c(2,3)],style = "bootstrap")
+```

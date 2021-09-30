@@ -108,9 +108,7 @@ w2
 # Lista de publicaciones
 
 ```{r}
-DT::datatable(aux3[,c(3,4,5)],style = "bootstrap",options = list(dom = 't',
-  lengthMenu = list(c(25, 100, -1), c('100', '400', 'All')),
-  pageLength = 100))
+DT::datatable(aux3[,c(3,4,5)],style = "bootstrap")
 ```
 
 # Lista de medios
