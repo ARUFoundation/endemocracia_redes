@@ -23,7 +23,7 @@ words <- sort(rowSums(matrix),decreasing=TRUE)
 df <- data.frame(word = names(words),freq=words)    
 wordcloud2(df)
 ##funciones
-#vectores de texto    
+#vectores de texto     
 nube<-function(aux,palabras){
   docs<-Corpus(VectorSource(aux))
   docs <- docs %>%
