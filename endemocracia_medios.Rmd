@@ -21,6 +21,7 @@ library(dplyr)
 library(stringr)
 library(lubridate)
 library(rtweet)
+library(DT)
 nube<-function(aux,palabras){
   docs<-Corpus(VectorSource(aux))
   docs <- docs %>%
@@ -107,11 +108,13 @@ w2
 # Lista de publicaciones
 
 ```{r}
-knitr::kable(aux3[,c(3,4,5)])
+DT::datatable(aux3[,c(3,4,5)],style = "bootstrap",options = list(dom = 't',
+  lengthMenu = list(c(25, 100, -1), c('100', '400', 'All')),
+  pageLength = 100))
 ```
 
 # Lista de medios
 
 ```{r}
-knitr::kable(aux[,c(2,3)])
+DT::datatable(aux[,c(2,3)],style = "bootstrap")
 ```
