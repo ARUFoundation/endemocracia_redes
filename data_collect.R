@@ -3,22 +3,28 @@
 #Autor: Alvaro Chirino
 #Fecha: 1 de octubre
 #######################
+rm(list=ls())
 library(readxl)
 library(dplyr)
 library(stringr)
 library(lubridate)
-library(rtweet)
+library(help=rtweet)
+library(xlsx)
+library(httr)
+library(httpuv)
 ##################################
+## load rtweet
 
+##################################
 #medios de comunicación twitter
-bdm<-read_excel("C:\\Users\\Alvaro Chirino\\Documents\\GitHub\\endemocracia_redes\\data\\Base_v0.xlsx",1)
+url1<-"https://github.com/ARUFoundation/endemocracia_redes/raw/main/data/Base_v0.xlsx"
+GET(url1, write_disk(tf <- tempfile(fileext = ".xlsx")))
+bdm <- read_excel(tf, 1)
 bdm<-bdm %>% filter(twitter!="")
-
 bdm$twitter<-str_trim(bdm$twitter,side=c("both"))
 bdm$twitter<-gsub(" ","",bdm$twitter,fixed = T)
 bdm$twitter<-gsub("@","",bdm$twitter,fixed = T)
 bdm$twitter<-gsub("https://twitter.com/","",bdm$twitter,fixed = T)
-
 vv<-c("user_id","screen_name","followers_count","profile_image_url")
 aux<-NULL
 for(i in 1:nrow(bdm)){
