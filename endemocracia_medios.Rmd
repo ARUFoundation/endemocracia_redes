@@ -14,6 +14,7 @@ library(flexdashboard)
 ```
 
 ```{r}
+rm(list=ls())
 library(tm)
 library(wordcloud2)
 library(readxl)
@@ -37,27 +38,10 @@ nube<-function(aux,palabras){
   df <- data.frame(word = names(words),freq=words)    
   return(df)
 }
-bdm<-read_excel("C:\\Users\\Alvaro Chirino\\Documents\\GitHub\\endemocracia_redes\\data\\Base_v0.xlsx",1)
-bdm<-bdm %>% filter(twitter!="")
+load("C:\\Users\\Alvaro Chirino\\Documents\\GitHub\\endemocracia_redes\\data\\medios.RData")
 
-bdm$twitter<-str_trim(bdm$twitter,side=c("both"))
-bdm$twitter<-gsub(" ","",bdm$twitter,fixed = T)
-bdm$twitter<-gsub("@","",bdm$twitter,fixed = T)
-bdm$twitter<-gsub("https://twitter.com/","",bdm$twitter,fixed = T)
-
-vv<-c("user_id","screen_name","followers_count","profile_image_url")
-aux<-NULL
-for(i in 1:nrow(bdm)){
-#print(bdm$twitter[i])
-aa<-lookup_users(bdm$twitter[i])
-if(nrow(aa)>0){
-aux<-rbind(aa[,vv],aux  )  
-}
-}
-depto<-c("chuquisaca","lapaz","cochabamba","oruro","potosí","tarija","beni","pando","santacruz")
-aux2<-get_timelines(aux$screen_name,n=200)
-aux3<-aux2 %>% filter(as_date(created_at)==today())
-aux4<-aux3 %>% mutate(nn=1) %>% group_by(screen_name) %>% mutate(nn=cumsum(nn)) %>% filter(nn<10)
+tw_hoy<-bd_medios %>% filter(as_date(created_at)==today())
+tw_pon<-tw_hoy %>% mutate(nn=1) %>% group_by(screen_name) %>% mutate(nn=cumsum(nn)) %>% filter(nn<=10)
 ```
 
 
@@ -69,19 +53,19 @@ Row
 ### Número de medios
 
 ```{r}
-valueBox(length(unique(aux3$user_id)), icon = "fa-pencil")
+valueBox(length(unique(tw_hoy$user_id)), icon = "fa-pencil")
 ```
 
 ### Publicaciones analizadas
 
 ```{r}
-valueBox(nrow(aux3), icon = "fa-comments")
+valueBox(nrow(tw_hoy), icon = "fa-comments")
 ```
 
 ### Publicaciones ponderadas
 
 ```{r}
-valueBox(nrow(aux4), icon = "fa-trash")
+valueBox(nrow(tw_pon), icon = "fa-trash")
 ```
 
 Row
@@ -90,7 +74,7 @@ Row
 ### Publicaciones globales
 
 ```{r}
-df1<-nube(aux3$text,c("bolivia",aux$screen_name,"btvinforma",depto,"urgentebo"))
+df1<-nube(tw_hoy$text,c("bolivia",tw_medios$screen_name,"btvinforma"))
 w1<-wordcloud2(data=df1,color='random-dark',size=0.5,shape = 'pentagon')
 w1
 ```
@@ -99,20 +83,62 @@ w1
 
 ```{r}
 #controlando el peso de máximo 10 noticias por medio
-df2<-nube(aux4 %>%  select(text),c("bolivia",aux$screen_name,"btvinforma",depto,"urgentebo","erboldigital"))
+df2<-nube(tw_pon %>%  select(text),c("bolivia",tw_medios$screen_name))
 w2<-wordcloud2(data=df2,color='random-dark',size=0.5,shape = 'pentagon')
 w2
+```
+
+
+# Análisis de Redes
+
+```{r}
+library(tm)
+library(igraph)
+# Build corpus
+corpus<-tw_pon$text
+corpus <- Corpus(VectorSource(corpus))
+
+# Clean text
+corpus <- tm_map(corpus, tolower)
+corpus <- tm_map(corpus, removePunctuation)
+corpus <- tm_map(corpus, removeNumbers)
+cleanset <- tm_map(corpus, removeWords, stopwords('spanish'))
+removeURL <- function(x) gsub('http[[:alnum:]]*', '', x)
+cleanset <- tm_map(cleanset, content_transformer(removeURL))
+cleanset <- tm_map(cleanset, removeWords, c('aapl', 'apple'))
+cleanset <- tm_map(cleanset, gsub, 
+                   pattern = 'stocks', 
+                   replacement = 'stock')
+cleanset <- tm_map(cleanset, stripWhitespace)
+
+# Term document matrix
+tdm <- TermDocumentMatrix(cleanset)
+tdm <- as.matrix(tdm)
+tdm <- tdm[rowSums(tdm)>2,]
+
+# Network of terms
+tdm[tdm>1] <- 1
+termM <- tdm %*% t(tdm)
+g <- graph.adjacency(termM, weighted = T, mode = 'undirected')
+g <- simplify(g)
+V(g)$label <- V(g)$name
+V(g)$degree <- degree(g)
+
+# Community detection
+prop <- cluster_label_prop(g)
+
+plot(prop, g,vertex.size = V(g)$degree*.5)
 ```
 
 
 # Lista de publicaciones
 
 ```{r}
-DT::datatable(aux3[,c(3,4,5)],style = "bootstrap")
+DT::datatable(tw_hoy[,c(3,4,5)],style = "bootstrap")
 ```
 
 # Lista de medios
 
 ```{r}
-DT::datatable(aux[,c(2,3)],style = "bootstrap")
+DT::datatable(tw_medios[,c(2,3)],style = "bootstrap")
 ```

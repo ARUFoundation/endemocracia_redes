@@ -8,8 +8,7 @@ library(readxl)
 library(dplyr)
 library(stringr)
 library(lubridate)
-library(help=rtweet)
-library(xlsx)
+library(rtweet)
 library(httr)
 library(httpuv)
 ##################################
@@ -34,7 +33,8 @@ for(i in 1:nrow(bdm)){
     aux<-rbind(aa[,vv],aux  )  
   }
 }
-depto<-c("chuquisaca","lapaz","cochabamba","oruro","potosí","tarija","beni","pando","santacruz")
-aux2<-get_timelines(aux$screen_name,n=200)
-aux3<-aux2 %>% filter(as_date(created_at)==today())
-aux4<-aux3 %>% mutate(nn=1) %>% group_by(screen_name) %>% mutate(nn=cumsum(nn)) %>% filter(nn<10)
+tw_medios<-aux
+bd_medios<-get_timelines(aux$screen_name,n=500)
+save(tw_medios,bd_medios,file="C:\\Users\\Alvaro Chirino\\Documents\\GitHub\\endemocracia_redes\\data\\medios.RData")
+##################################
+#Camaras

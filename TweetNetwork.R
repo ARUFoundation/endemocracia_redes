@@ -1,16 +1,18 @@
 # Read file
 apple <- read.csv(file.choose(), header = T)
 
+apple<-tw_pon
 # Build corpus
 library(tm)
-corpus <- iconv(apple$text, to = "utf-8-mac")
+corpus <- iconv(apple$text, to = "utf8")
+corpus<-apple$text
 corpus <- Corpus(VectorSource(corpus))
 
 # Clean text
 corpus <- tm_map(corpus, tolower)
 corpus <- tm_map(corpus, removePunctuation)
 corpus <- tm_map(corpus, removeNumbers)
-cleanset <- tm_map(corpus, removeWords, stopwords('english'))
+cleanset <- tm_map(corpus, removeWords, stopwords('spanish'))
 removeURL <- function(x) gsub('http[[:alnum:]]*', '', x)
 cleanset <- tm_map(cleanset, content_transformer(removeURL))
 cleanset <- tm_map(cleanset, removeWords, c('aapl', 'apple'))
@@ -22,7 +24,7 @@ cleanset <- tm_map(cleanset, stripWhitespace)
 # Term document matrix
 tdm <- TermDocumentMatrix(cleanset)
 tdm <- as.matrix(tdm)
-tdm <- tdm[rowSums(tdm)>30,]
+tdm <- tdm[rowSums(tdm)>2,]
 tdm[1:10,1:10]
 
 # Network of terms
@@ -59,6 +61,8 @@ plot(comm, g)
 
 prop <- cluster_label_prop(g)
 plot(prop, g)
+
+plot(prop, g,vertex.size = V(g)$degree*2)
 
 greed <- cluster_fast_greedy(as.undirected(g))
 plot(greed, as.undirected(g))
