@@ -38,8 +38,21 @@ nube<-function(aux,palabras){
   df <- data.frame(word = names(words),freq=words)    
   return(df)
 }
+cleanPosts <- function(text) {
+  clean_texts <- text %>%
+    gsub("<.*>", "", .) %>% # remove emojis
+    gsub("&amp;", "", .) %>% # remove &
+    gsub("(RT|via)((?:\\b\\W*@\\w+)+)", "", .) %>% # remove retweet entities
+    gsub("@\\w+", "", .) %>% # remove at people
+    gsub("[[:punct:]]", "", .) %>% # remove punctuation
+    gsub("[[:digit:]]", "", .) %>% # remove digits
+    gsub("http\\w+", "", .) %>% # remove html links
+    gsub("[ \t]{2,}", " ", .) %>% # remove unnecessary spaces
+    gsub("^\\s+|\\s+$", "", .) %>% # remove unnecessary spaces
+    tolower
+  return(clean_texts)
+}
 load("C:\\Users\\Alvaro Chirino\\Documents\\GitHub\\endemocracia_redes\\data\\medios.RData")
-
 tw_hoy<-bd_medios %>% filter(as_date(created_at)==today())
 tw_pon<-tw_hoy %>% mutate(nn=1) %>% group_by(screen_name) %>% mutate(nn=cumsum(nn)) %>% filter(nn<=10)
 ```
@@ -94,27 +107,28 @@ w2
 ```{r}
 library(tm)
 library(igraph)
+library(visNetwork) 
 # Build corpus
 corpus<-tw_pon$text
+
 corpus <- Corpus(VectorSource(corpus))
+
+aux_drop<-c("aquí","envivo","lea","día","nel","nla","𝐩𝐚𝐫𝐚","𝐥𝐚","𝐜𝐨𝐧","👉","𝐚","𝐞𝐥","piedrapapelytinta","streaminglarazón","𝐲","🔴","<U+0001F534>")
 
 # Clean text
 corpus <- tm_map(corpus, tolower)
 corpus <- tm_map(corpus, removePunctuation)
 corpus <- tm_map(corpus, removeNumbers)
-cleanset <- tm_map(corpus, removeWords, stopwords('spanish'))
+cleanset <- tm_map(corpus, removeWords, c(stopwords('spanish'),"𝐝𝐞","nota"))
+cleanset <- tm_map(cleanset, removeWords, aux_drop)
 removeURL <- function(x) gsub('http[[:alnum:]]*', '', x)
 cleanset <- tm_map(cleanset, content_transformer(removeURL))
-cleanset <- tm_map(cleanset, removeWords, c('aapl', 'apple'))
-cleanset <- tm_map(cleanset, gsub, 
-                   pattern = 'stocks', 
-                   replacement = 'stock')
 cleanset <- tm_map(cleanset, stripWhitespace)
 
 # Term document matrix
 tdm <- TermDocumentMatrix(cleanset)
 tdm <- as.matrix(tdm)
-tdm <- tdm[rowSums(tdm)>2,]
+tdm <- tdm[rowSums(tdm)>=6,]
 
 # Network of terms
 tdm[tdm>1] <- 1
@@ -124,10 +138,14 @@ g <- simplify(g)
 V(g)$label <- V(g)$name
 V(g)$degree <- degree(g)
 
-# Community detection
-prop <- cluster_label_prop(g)
+data <- toVisNetworkData(g)
+nodes = data$nodes; edges = data$edges
+grupos <- cluster_label_prop(g)
 
-plot(prop, g,vertex.size = V(g)$degree*.5)
+nodes$value<-prop.table(nodes$degree)*1000
+nodes$group<-grupos$membership
+
+visNetwork(nodes,edges) %>% visEdges(arrows = "to")
 ```
 
 
