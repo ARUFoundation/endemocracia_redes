@@ -52,7 +52,7 @@ cleanPosts <- function(text) {
     tolower
   return(clean_texts)
 }
-load("C:\\Users\\Alvaro Chirino\\Documents\\GitHub\\endemocracia_redes\\data\\medios.RData")
+load(url("http://200.105.173.107:8080/endemocracia/medios.RData"))
 tw_hoy<-bd_medios %>% filter(as_date(created_at)==today())
 tw_pon<-tw_hoy %>% mutate(nn=1) %>% group_by(screen_name) %>% mutate(nn=cumsum(nn)) %>% filter(nn<=10)
 ```
