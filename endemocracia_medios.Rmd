@@ -23,6 +23,7 @@ library(stringr)
 library(lubridate)
 library(rtweet)
 library(DT)
+library(syuzhet)
 nube<-function(aux,palabras){
   docs<-Corpus(VectorSource(aux))
   docs <- docs %>%
@@ -57,6 +58,18 @@ tw_hoy<-bd_medios %>% filter(as_date(created_at)==today())
 tw_pon<-tw_hoy %>% mutate(nn=1) %>% group_by(screen_name) %>% mutate(nn=cumsum(nn)) %>% filter(nn<=10)
 ```
 
+Sidebar {.sidebar}
+================================================
+
+#### Endemocracia
+
+#### Acerca de la plataforma
+
+#### Recolección de la información
+
+#### Actualización de la información
+
+#### Equipo
 
 # Tendencia en redes ``r today()``
 
@@ -148,14 +161,38 @@ nodes$group<-grupos$membership
 visNetwork(nodes,edges) %>% visEdges(arrows = "to")
 ```
 
+# Sentimientos
 
-# Lista de publicaciones
+### Global
+
+```{r}
+library(bubbles)
+library(viridis) 
+ss<-removeWords(removeNumbers(removePunctuation(tw_hoy$text)),stopwords("spanish"))
+aa<-get_nrc_sentiment(ss,language = "spanish")
+aa<-aa %>% summarise_at(vars(anger:trust),mean)*100
+lbb<-c("ira", "anticipación","asco", "miedo","alegría", "tristeza","sorpresa", "confianza")
+bubbles(t(aa),lbb,col="#FAD7A0")
+```
+
+### Ponderado
+
+```{r}
+ss1<-removeWords(removeNumbers(removePunctuation(tw_pon$text)),stopwords("spanish"))
+aa1<-get_nrc_sentiment(ss1,language = "spanish")
+aa1<-aa1 %>% summarise_at(vars(anger:trust),mean)*100
+bubbles(t(aa1),lbb,col="#FAD7A0")
+```
+
+# Fuentes de información
+
+### Lista de publicaciones
 
 ```{r}
 DT::datatable(tw_hoy[,c(3,4,5)],style = "bootstrap")
 ```
 
-# Lista de medios
+### Lista de medios
 
 ```{r}
 DT::datatable(tw_medios[,c(2,3)],style = "bootstrap")
