@@ -56,22 +56,42 @@ cleanPosts <- function(text) {
 load(url("http://200.105.173.107:8080/endemocracia/medios.RData"))
 tw_hoy<-bd_medios %>% filter(as_date(created_at)==today())
 tw_pon<-tw_hoy %>% mutate(nn=1) %>% group_by(screen_name) %>% mutate(nn=cumsum(nn)) %>% filter(nn<=10)
+#devtools::install_github("jcheng5/bubbles")
 ```
 
 Sidebar {.sidebar}
 ================================================
 
-#### Endemocracia
+#### **Endemocracia**
 
-#### Acerca de la plataforma
+Iniciativa de Fundación ARU que tiene el objetivo de promover un debate electoral a partir de información objetiva y medible.
 
-#### Recolección de la información
+#### **Acerca de la plataforma**
 
-#### Actualización de la información
+...
 
-#### Equipo
+#### **Recolección de la información**
 
-# Tendencia en redes ``r today()``
+La información proviene de una base de datos de medios de comunicación con cuentas activas en twitter y un proceso de Web scraping sobre sus publicaciones actuales
+
+#### **Actualización de la información**
+
+Se actualiza cada hora. Última actualización:
+
+  * `r date()`
+
+#### **Equipo**
+
+  * Base de datos: Sherli Mamani, Beatriz Mamani
+  * Concepto y diseño: Alvaro Chirino
+
+#### **Licencia y apoyo**
+
+![](https://www.upo.es/biblioteca/servicios/pubdig/propiedadintelectual/tutoriales/derechos_autor/images/pic035.png)
+
+Le invitamos a apoyar la iniciativa para mantener esta licencia. <https://www.endemocracia.bo>
+
+# Tendencia en redes
 
 Row
 -----------------------------------------------------------------------
@@ -116,6 +136,8 @@ w2
 
 
 # Análisis de Redes
+
+### Publicaciones ponderadas
 
 ```{r}
 library(tm)
@@ -172,7 +194,7 @@ ss<-removeWords(removeNumbers(removePunctuation(tw_hoy$text)),stopwords("spanish
 aa<-get_nrc_sentiment(ss,language = "spanish")
 aa<-aa %>% summarise_at(vars(anger:trust),mean)*100
 lbb<-c("ira", "anticipación","asco", "miedo","alegría", "tristeza","sorpresa", "confianza")
-bubbles(t(aa),lbb,col="#FAD7A0")
+bubbles(t(aa),lbb,col=terrain.colors(8,alpha=NULL,rev = T))
 ```
 
 ### Ponderado
@@ -181,7 +203,7 @@ bubbles(t(aa),lbb,col="#FAD7A0")
 ss1<-removeWords(removeNumbers(removePunctuation(tw_pon$text)),stopwords("spanish"))
 aa1<-get_nrc_sentiment(ss1,language = "spanish")
 aa1<-aa1 %>% summarise_at(vars(anger:trust),mean)*100
-bubbles(t(aa1),lbb,col="#FAD7A0")
+bubbles(t(aa1),lbb,col= terrain.colors(8,alpha=NULL,rev = T))
 ```
 
 # Fuentes de información
