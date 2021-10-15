@@ -2,6 +2,7 @@
 title: "Monitoreo de Medios"
 output: 
   flexdashboard::flex_dashboard:
+    logo: demo.png
     orientation: rows
     vertical_layout: fill
     theme: lumen
