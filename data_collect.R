@@ -36,5 +36,6 @@ for(i in 1:nrow(bdm)){
 tw_medios<-aux
 bd_medios<-get_timelines(aux$screen_name,n=500)
 save(tw_medios,bd_medios,file="C:\\Users\\Alvaro Chirino\\Documents\\GitHub\\endemocracia_redes\\data\\medios.RData")
+save(tw_medios,bd_medios,file="medios.RData")
 ##################################
 #Camaras
